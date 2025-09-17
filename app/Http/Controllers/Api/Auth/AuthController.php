@@ -3,13 +3,18 @@
 namespace App\Http\Controllers\Api\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\StoreUserRequest;
 use App\Models\User;
+use App\Repositories\Contracts\UserRepositoryInterface;
 use Hash;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class AuthController extends Controller
 {
+    public function __construct(protected UserRepositoryInterface $userRepository)
+    {
+    }
     /**
      * Register
      *
@@ -17,20 +22,10 @@ class AuthController extends Controller
      *
      * @unauthenticated
      */
-    public function register(Request $request)
+    public function register(StoreUserRequest $request)
     {
-        $request->validate([
-            'name' => 'required|string|min:3',
-            'email' => 'required|email|unique:users',
-            'password' => 'required|min:8',
-        ]);
-
         try {
-            $user = User::create([
-                'name' => $request->input('name'),
-                'email' => $request->input('email'),
-                'password' => Hash::make($request->input('password')),
-            ]);
+            $user = $this->userRepository->store($request->validated());
 
             return response()->json([
                 'message' => 'User registered successfully.'
